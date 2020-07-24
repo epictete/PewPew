@@ -1,12 +1,14 @@
 var start = document.getElementById("start");
 var restart = document.getElementById("restart");
 var canvas = document.getElementById("myCanvas");
+var result = document.getElementById("result");
+var comment = document.getElementById("comment");
 var ctx = canvas.getContext("2d");
 
-var ballRadius = 10;
+var ballRadius = 5;
 
 var x = canvas.width / 2;
-var y = canvas.height - 30;
+var y = canvas.height - 20;
 var dy = -2;
 
 var paddleWidth = 75;
@@ -25,10 +27,13 @@ var brickY = 10;
 var counter = 0;
 var interval = setInterval(draw, 10);
 
-start.addEventListener("click", () => { interval })
-restart.addEventListener("click", () => { document.location.reload() })
+restart.addEventListener("click", () => document.location.reload(), false);
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
+
+// start.onclick = function () {
+//     interval = setInterval(draw, 10);
+// }
 
 function keyDownHandler(e) {
     if (e.keyCode == 39) {
@@ -50,7 +55,7 @@ function keyUpHandler(e) {
 
 function drawBall() {
     ctx.beginPath();
-    ctx.arc(x, y, 10, 0, Math.PI * 2);
+    ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
     ctx.fillStyle = "#0095DD";
     ctx.fill();
     ctx.closePath();
@@ -75,14 +80,15 @@ function drawBrick() {
 function collisionDetection() {
     if (x > brickX && x < brickX + brickWidth && y > brickY && y < brickY + brickHeight) {
         counter++;
+        score.innerHTML = counter;
         if (counter < 10) {
-            score.innerHTML = counter;
             spacePressed = false;
             x = canvas.width / 2;
-            y = canvas.height - 30;
+            y = canvas.height - 20;
             brickX = Math.floor(Math.random() * ((canvas.width - brickPadding - brickWidth) - brickPadding) + brickPadding);
         } else {
-            score.innerHTML = `${counter} => You win!`;
+            result.innerHTML = `You win!`;
+            comment.innerHTML = `Click Restart to play again.`;
             clearInterval(interval);
         }
     }
@@ -99,9 +105,8 @@ function draw() {
         if (y + ballRadius > 0) {
             y += dy;
         } else {
-            console.log('out');
             spacePressed = false;
-            y = canvas.height - 30;
+            y = canvas.height - 20;
         }
     }
 
@@ -112,4 +117,3 @@ function draw() {
         x -= 5;
     }
 }
-
