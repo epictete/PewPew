@@ -32,8 +32,11 @@ var brick = {
     width: 30,
     height: 30,
     padding: 10,
-    x: 50, // Random
-    y: 30
+    x: 0,
+    y: 30,
+    randX: function () {
+        return Math.floor(Math.random() * (canvas.width - 2 * this.padding - this.width) + this.padding);
+    }
 }
 
 var game = {
@@ -42,7 +45,10 @@ var game = {
     end: false
 }
 
-start.onclick = draw;
+start.onclick = () => {
+    brick.x = brick.randX();
+    draw();
+}
 restart.onclick = () => {
     start.disabled = false;
     document.location.reload();
@@ -124,7 +130,7 @@ function collisionDetection() {
         game.counter++;
         if (game.counter < game.goal) {
             y = canvas.height - 20;
-            brick.x = Math.floor(Math.random() * ((canvas.width - brick.padding - brick.width) - brick.padding) + brick.padding);
+            brick.x = brick.randX();
             ball.show = false;
         } else {
             drawResult();
