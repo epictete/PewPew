@@ -1,69 +1,111 @@
-var start = document.getElementById("start");
-var restart = document.getElementById("restart");
 var canvas = document.getElementById("myCanvas");
-var result = document.getElementById("result");
-var comment = document.getElementById("comment");
 var ctx = canvas.getContext("2d");
 
-var ballRadius = 5;
+var start = document.getElementById("start");
+var restart = document.getElementById("restart");
+var result = document.getElementById("result");
+var comment = document.getElementById("comment");
 
 var x = canvas.width / 2;
 var y = canvas.height - 20;
-var dy = -2;
+var dy = -5;
+var raf;
 
-var paddleWidth = 75;
-var paddleHeight = 10;
+var ball = {
+    radius: 5,
+    show: false
+}
 
-var rightPressed = false;
-var leftPressed = false;
-var spacePressed = false;
+var paddle = {
+    width: 75,
+    height: 10,
+    x: (canvas.width - this.width) / 2
+}
 
-var brickWidth = 30;
-var brickHeight = 30;
-var brickPadding = 10;
-var brickX = Math.floor(Math.random() * ((canvas.width - brickPadding - brickWidth) - brickPadding) + brickPadding);
-var brickY = 10;
+var keyboard = {
+    left: false,
+    right: false,
+    space: false
+}
 
-var counter = 0;
-var interval = setInterval(draw, 10);
+var brick = {
+    width: 30,
+    height: 30,
+    padding: 10,
+    x: 50, // Random
+    y: 30
+}
 
-restart.addEventListener("click", () => document.location.reload(), false);
+var game = {
+    counter: 0,
+    goal: 10,
+    end: false
+}
+
+start.onclick = draw;
+restart.onclick = () => {
+    start.disabled = false;
+    document.location.reload();
+}
+
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
+document.addEventListener("mousemove", mouseMoveHandler, false);
 
-// start.onclick = function () {
-//     interval = setInterval(draw, 10);
-// }
+function mouseMoveHandler(e) {
+    var relativeX = e.clientX - canvas.offsetLeft;
+    if (relativeX > 0 && relativeX < canvas.width) {
+        paddle.x = relativeX - paddle.width / 2;
+    }
+}
 
 function keyDownHandler(e) {
     if (e.keyCode == 39) {
-        rightPressed = true;
+        keyboard.right = true;
     } else if (e.keyCode == 37) {
-        leftPressed = true;
+        keyboard.left = true;
     } else if (e.keyCode == 32) {
-        spacePressed = true;
+        keyboard.space = true;
     }
 }
 
 function keyUpHandler(e) {
     if (e.keyCode == 39) {
-        rightPressed = false;
+        keyboard.right = false;
     } else if (e.keyCode == 37) {
-        leftPressed = false;
+        keyboard.left = false;
+    } else if (e.keyCode == 32) {
+        keyboard.space = false;
     }
 }
 
-function drawBall() {
-    ctx.beginPath();
-    ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+function drawResult() {
+    ctx.font = "20px Arial";
     ctx.fillStyle = "#0095DD";
-    ctx.fill();
-    ctx.closePath();
+    ctx.textAlign = "center";
+    ctx.fillText("You WIN! Click Restart to play again.", canvas.width / 2, canvas.height / 2);
+}
+
+function drawScore() {
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "#0095DD";
+    ctx.textAlign = "start";
+    ctx.fillText("Score: " + game.counter + "/" + game.goal, 8, 20);
+}
+
+function drawBall() {
+    if (ball.show) {
+        ctx.beginPath();
+        ctx.arc(x, y, ball.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "#0095DD";
+        ctx.fill();
+        ctx.closePath();
+    }
 }
 
 function drawPaddle() {
     ctx.beginPath();
-    ctx.rect(x - paddleWidth / 2, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+    ctx.rect(paddle.x, canvas.height - paddle.height, paddle.width, paddle.height);
     ctx.fillStyle = "#0095DD";
     ctx.fill();
     ctx.closePath();
@@ -71,49 +113,57 @@ function drawPaddle() {
 
 function drawBrick() {
     ctx.beginPath();
-    ctx.rect(brickX, brickY, brickWidth, brickHeight);
+    ctx.rect(brick.x, brick.y, brick.width, brick.height);
     ctx.fillStyle = "#0095DD";
     ctx.fill();
     ctx.closePath();
 }
 
 function collisionDetection() {
-    if (x > brickX && x < brickX + brickWidth && y > brickY && y < brickY + brickHeight) {
-        counter++;
-        score.innerHTML = counter;
-        if (counter < 10) {
-            spacePressed = false;
-            x = canvas.width / 2;
+    if (x > brick.x && x < brick.x + brick.width && y > brick.y && y < brick.y + brick.height) {
+        game.counter++;
+        if (game.counter < game.goal) {
             y = canvas.height - 20;
-            brickX = Math.floor(Math.random() * ((canvas.width - brickPadding - brickWidth) - brickPadding) + brickPadding);
+            brick.x = Math.floor(Math.random() * ((canvas.width - brick.padding - brick.width) - brick.padding) + brick.padding);
+            ball.show = false;
         } else {
-            result.innerHTML = `You win!`;
-            comment.innerHTML = `Click Restart to play again.`;
-            clearInterval(interval);
+            drawResult();
+            game.end = true;
         }
     }
 }
 
 function draw() {
+
+    if (game.end) {
+        window.cancelAnimationFrame(raf);
+    } else {
+        raf = window.requestAnimationFrame(draw);
+    }
+
+    start.disabled = true;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBrick();
+    drawBall();
     drawPaddle();
+    drawScore();
     collisionDetection();
 
-    if (spacePressed) {
-        drawBall();
-        if (y + ballRadius > 0) {
-            y += dy;
-        } else {
-            spacePressed = false;
-            y = canvas.height - 20;
-        }
+    if (keyboard.space) {
+        x = paddle.x + paddle.width / 2;
+        ball.show = true;
     }
 
-    if (rightPressed && x < canvas.width - paddleWidth / 2) {
-        x += 5;
+    if (ball.show && y + ball.radius > 0) {
+        y += dy;
+    } else {
+        ball.show = false;
+        y = canvas.height - 20;
     }
-    else if (leftPressed && x - paddleWidth / 2 > 0) {
-        x -= 5;
+
+    if (keyboard.right && paddle.x + paddle.width < canvas.width) {
+        paddle.x += 5;
+    } else if (keyboard.left && paddle.x > 0) {
+        paddle.x -= 5;
     }
 }
